@@ -85,29 +85,40 @@ def get_intensity_vector(audio_stft, frame_len, fs, n_mel_bands):
     """
     Compute intensity vector. Input is a four channel stft of the signals.
     """
-    IVx = np.real(np.conj(audio_stft[0, :, :]) * audio_stft[1, :, :])
-    IVy = np.real(np.conj(audio_stft[0, :, :]) * audio_stft[2, :, :])
-    IVz = np.real(np.conj(audio_stft[0, :, :]) * audio_stft[3, :, :])
     
-    # Mel filterbanks
-    mel_weights = librosa.filters.mel(n_fft=frame_len, sr=fs, n_mels=n_mel_bands)
+    intensity_vector_list = list()
     
-    # Menor número representável (?), é necessário porque se não ocorre uma divisão por zero na normalização.
-    epsilon = 1e-8
+    for i in range(0,audio_stft.shape[0],4):
     
-    # Norm vector
-    norm = np.sqrt(IVx**2 + IVy**2 + IVz**2) + epsilon
-    
-    # Intensity vector for each direction
-    IVx_norm = np.matmul(mel_weights, (IVx / norm))
-    IVy_norm = np.matmul(mel_weights, (IVy / norm))
-    IVz_norm = np.matmul(mel_weights, (IVz / norm))
-       
-    intensity_vector = np.stack((IVx_norm, IVy_norm, IVz_norm), axis=0)
-    
-    return intensity_vector
+        IVx = np.real(np.conj(audio_stft[i, :, :]) * audio_stft[i+1, :, :])
+        IVy = np.real(np.conj(audio_stft[i, :, :]) * audio_stft[i+2, :, :])
+        IVz = np.real(np.conj(audio_stft[i, :, :]) * audio_stft[i+3, :, :])
 
-def get_logmel_IV(audio, fs=32000, n_fft=2048, hop_length=512, n_mel_bands=100, frame_length=2049):
+        # Mel filterbanks
+        mel_weights = librosa.filters.mel(n_fft=frame_len, sr=fs, n_mels=n_mel_bands)
+
+        # Menor número representável (?), é necessário porque se não ocorre uma divisão por zero na normalização.
+        epsilon = 1e-8
+
+        # Norm vector
+        norm = np.sqrt(IVx**2 + IVy**2 + IVz**2) + epsilon
+
+        # Intensity vector for each direction
+        IVx_norm = np.matmul(mel_weights, (IVx / norm))
+        IVy_norm = np.matmul(mel_weights, (IVy / norm))
+        IVz_norm = np.matmul(mel_weights, (IVz / norm))
+
+        intensity_vector = np.stack((IVx_norm, IVy_norm, IVz_norm), axis=0)
+        intensity_vector_list.extend(intensity_vector)         
+       
+    return np.asarray(intensity_vector_list)
+
+def get_logmel_IV(audio, 
+                  fs=32000, 
+                  n_fft=2048, 
+                  hop_length=512, 
+                  n_mel_bands=100, 
+                  frame_length=2049):
     
     audio_stft, freq_bins = get_stft(audio,fs,n_fft,hop_length)
     logmel_stft = get_logmel_spectrogram(audio,fs,n_fft, hop_length,n_mel_bands)

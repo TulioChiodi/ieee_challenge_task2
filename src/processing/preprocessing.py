@@ -48,7 +48,8 @@ def preprocessing_task2(input_path,
                         n_fft=2048, 
                         hop_length=400, 
                         n_mel_bands=256, 
-                        frame_length=2049):
+                        frame_length=2049,
+                        feats='logmel_IV'):
     '''
     predictors output: ambisonics stft
                        Matrix shape: -x data points
@@ -98,22 +99,23 @@ def preprocessing_task2(input_path,
 
                 #compute features
                 # STFT
-                stft = uf.spectrum_fast(samples, 
+                if feats == 'stft':
+                    features = uf.spectrum_fast(samples, 
                                         nperseg=stft_nperseg,
                                         noverlap=stft_noverlap,
                                         window=stft_window,
                                         output_phase=output_phase)
                 
                 # logmel_IV
-                
-                features = fe.get_logmel_IV(samples, 
-                                            fs=fs, 
-                                            n_fft=n_fft, 
-                                            hop_length=hop_length, 
-                                            n_mel_bands=n_mel_bands, 
-                                            frame_length=frame_length)
-                
-                features = features[:,:,:-1]
+                elif feats == 'logmel_IV':
+                    features = fe.get_logmel_IV(samples, 
+                                                fs=fs, 
+                                                n_fft=n_fft, 
+                                                hop_length=hop_length, 
+                                                n_mel_bands=n_mel_bands, 
+                                                frame_length=frame_length)
+
+                    features = features[:,:,:-1]
 
                 #stft = np.reshape(samples, (samples.shape[1], samples.shape[0],
                 #                     samples.shape[2]))
